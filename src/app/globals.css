@@ -203,6 +203,55 @@ button:disabled {
   color: var(--error);
 }
 
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .tabs button {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 1rem;
+}
+
+table {
+  min-width: 500px;
+}
+
+/* For very small screens, make inputs more compact */
+@media (max-width: 380px) {
+  input {
+    font-size: 0.875rem;
+    padding: 0.6rem 0.8rem;
+  }
+}
+
 a {
   color: var(--primary);
   text-decoration: none;

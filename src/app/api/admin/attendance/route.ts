@@ -22,7 +22,7 @@ export async function GET(request: Request) {
             },
         });
 
-        const records = students.map(s => ({
+        const records = students.map((s: any) => ({
             id: s.id,
             name: s.name,
             phone: s.phone,

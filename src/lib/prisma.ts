@@ -1,8 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 
+const url = process.env.DATABASE_URL || "file:prisma/dev.db";
+const authToken = process.env.DATABASE_AUTH_TOKEN;
+
 const adapter = new PrismaLibSql({
-    url: "file:prisma/dev.db",
+    url,
+    authToken,
 });
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };

@@ -27,7 +27,7 @@ function AttendanceForm() {
             const data = await response.json();
 
             if (response.ok) {
-                setMessage({ text: "출석이 완료되었습니다!", type: "success" });
+                setMessage({ text: "출석이 성공적으로 완료되었습니다!", type: "success" });
                 setPhone("");
                 setName("");
             } else {
@@ -41,53 +41,71 @@ function AttendanceForm() {
     };
 
     return (
-        <div className="card">
-            <h1>번영로 청소년부 출석체크</h1>
-            <p>{date} 예배 출석</p>
+        <div className="glass-card" style={{ maxWidth: "480px", width: "100%", padding: "3rem" }}>
+            <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+                <div style={{
+                    fontSize: "4rem",
+                    marginBottom: "1rem",
+                    filter: "drop-shadow(0 10px 15px rgba(0,0,0,0.1))"
+                }}>
+
+                </div>
+                <h1 style={{ fontSize: "2.25rem", marginBottom: "0.75rem", background: "linear-gradient(135deg, var(--primary), #818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    출석 체크
+                </h1>
+                <p style={{ fontSize: "1.1rem", fontWeight: "500" }}>{date.replace(/-/g, ". ")} 예배</p>
+            </div>
 
             <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="phone">연락처</label>
+                <div style={{ marginBottom: "1.5rem" }}>
+                    <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "700", fontSize: "0.95rem" }}>이름</label>
                     <input
-                        id="phone"
-                        type="tel"
-                        placeholder="010-1234-5678"
-                        value={phone}
-                        onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
-                        required
-                        disabled={loading}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="name">이름 (선택)</label>
-                    <input
-                        id="name"
                         type="text"
-                        placeholder="홍길동"
+                        placeholder="이름을 입력해주세요"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={loading}
+                        required
+                        style={{ padding: "1.1rem" }}
                     />
                 </div>
 
-                <button type="submit" disabled={loading} className="w-full" style={{ marginTop: "1.5rem" }}>
-                    {loading ? "처리 중..." : "출석하기"}
+                <div style={{ marginBottom: "2rem" }}>
+                    <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "700", fontSize: "0.95rem" }}>연락처 <span style={{ fontWeight: "400", color: "var(--secondary)", fontSize: "0.8rem" }}>(선택)</span></label>
+                    <input
+                        type="tel"
+                        placeholder="010-0000-0000"
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                        disabled={loading}
+                        style={{ padding: "1.1rem" }}
+                    />
+                </div>
+
+                <button type="submit" disabled={loading} style={{ width: "100%", padding: "1.2rem", fontSize: "1.1rem", borderRadius: "20px" }}>
+                    {loading ? "기록 중..." : "출석 확인하기"}
                 </button>
             </form>
 
             {message && (
-                <div className={`message ${message.type}`}>
+                <div className={`message ${message.type}`} style={{ animation: "modalEnter 0.4s ease-out" }}>
+                    {message.type === "success" ? "✅ " : "❌ "}
                     {message.text}
                 </div>
             )}
+
+            <div style={{ marginTop: "3rem", textAlign: "center", borderTop: "1px solid var(--border)", paddingTop: "2rem" }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--secondary)", margin: 0 }}>
+                    번영로 청소년부 (BYR Youth)
+                </p>
+            </div>
         </div>
     );
 }
 
 export default function AttendancePage() {
     return (
-        <main className="container">
+        <main className="container" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)" }}>
             <Suspense fallback={<div>로딩 중...</div>}>
                 <AttendanceForm />
             </Suspense>

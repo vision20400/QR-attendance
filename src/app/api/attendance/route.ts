@@ -5,28 +5,54 @@ export async function POST(request: Request) {
     try {
         const { phone, name, date } = await request.json();
 
-        if (!phone || !date) {
-            return NextResponse.json({ error: "연락처와 날짜는 필수입니다." }, { status: 400 });
+        if ((!phone && !name) || !date) {
+            return NextResponse.json({ error: "이름 또는 연락처와 날짜는 필수입니다." }, { status: 400 });
         }
 
-        // Find or create student
-        let student = await prisma.student.findUnique({
-            where: { phone },
-        });
+        let student;
 
-        if (!student) {
-            student = await prisma.student.create({
-                data: {
-                    phone,
-                    name: name || null,
-                },
+        if (phone) {
+            // Find or create student by phone
+            student = await prisma.student.findUnique({
+                where: { phone },
             });
-        } else if (name && !student.name) {
-            // Update name if it was previously empty
-            student = await prisma.student.update({
-                where: { id: student.id },
-                data: { name },
+
+            if (!student) {
+                student = await prisma.student.create({
+                    data: {
+                        phone,
+                        name: name || null,
+                    },
+                });
+            } else if (name && !student.name) {
+                // Update name if it was previously empty
+                student = await prisma.student.update({
+                    where: { id: student.id },
+                    data: { name },
+                });
+            }
+        } else {
+            // Only name provided
+            const students = await prisma.student.findMany({
+                where: { name },
             });
+
+            if (students.length > 1) {
+                return NextResponse.json({
+                    error: "동명이인이 존재합니다. 전화번호를 함께 입력해주세요."
+                }, { status: 400 });
+            }
+
+            if (students.length === 1) {
+                student = students[0];
+            } else {
+                // Create new student with only name
+                student = await prisma.student.create({
+                    data: {
+                        name,
+                    },
+                });
+            }
         }
 
         // Check if already checked in for today

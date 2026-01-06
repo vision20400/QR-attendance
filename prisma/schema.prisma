@@ -12,8 +12,10 @@ datasource db {
 
 model Student {
   id        String   @id @default(cuid())
-  phone     String   @unique
+  phone     String?   @unique
   name      String?
+  school    String?
+  year      String?
   createdAt DateTime @default(now())
   attendances Attendance[]
 }

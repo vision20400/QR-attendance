@@ -16,6 +16,7 @@ export async function GET() {
 
         return NextResponse.json(students);
     } catch (error) {
+        console.error("Fetch students error:", error);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

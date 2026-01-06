@@ -6,12 +6,31 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { name } = await request.json();
+        const { name, phone, school, year } = await request.json();
         const { id } = await params;
+
+        // Check if phone is being updated and if it's already in use
+        if (phone) {
+            const existing = await prisma.student.findFirst({
+                where: {
+                    phone,
+                    NOT: { id },
+                },
+            });
+
+            if (existing) {
+                return NextResponse.json({ error: "이미 사용 중인 연락처입니다." }, { status: 400 });
+            }
+        }
 
         const student = await prisma.student.update({
             where: { id },
-            data: { name },
+            data: {
+                name,
+                phone: phone || null,
+                school: school || null,
+                year: year || null
+            },
         });
 
         return NextResponse.json(student);

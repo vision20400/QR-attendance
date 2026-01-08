@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+// Directly import from the generated path to bypass any stale module caching
+import { PrismaClient } from '../../node_modules/.prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 
 const adapter = new PrismaLibSql({
@@ -6,8 +7,11 @@ const adapter = new PrismaLibSql({
     authToken: process.env.DATABASE_AUTH_TOKEN!,
 })
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const PRISMA_KEY = 'prisma_v3'
+const globalWithKey = globalThis as any;
 
-export const prisma = globalForPrisma.prisma || new PrismaClient({ adapter })
+if (!globalWithKey[PRISMA_KEY]) {
+    globalWithKey[PRISMA_KEY] = new PrismaClient({ adapter });
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export const prisma = globalWithKey[PRISMA_KEY] as PrismaClient;

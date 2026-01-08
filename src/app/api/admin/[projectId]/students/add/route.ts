@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { projectId } = await params;
+
+    // Check project ownership
+    const project = await prisma.project.findFirst({
+        where: { id: projectId, userId: session.userId }
+    });
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
     try {
         const { name, phone, school, year } = await request.json();
 
@@ -11,7 +23,9 @@ export async function POST(request: Request) {
 
         if (phone) {
             const existing = await prisma.student.findUnique({
-                where: { phone },
+                where: {
+                    projectId_phone: { projectId, phone }
+                },
             });
 
             if (existing) {
@@ -24,7 +38,8 @@ export async function POST(request: Request) {
                 name,
                 phone: phone || null,
                 school: school || null,
-                year: year || null
+                year: year || null,
+                projectId
             },
         });
 

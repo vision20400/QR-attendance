@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { projectId } = await params;
+
+    // Check project ownership
+    const project = await prisma.project.findFirst({
+        where: { id: projectId, userId: session.userId }
+    });
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
     try {
         const { studentId, date, isPresent } = await request.json();
 
@@ -9,20 +21,24 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "필수 데이터가 누락되었습니다." }, { status: 400 });
         }
 
+        // Ensure student belongs to this project
+        const student = await prisma.student.findFirst({
+            where: { id: studentId, projectId }
+        });
+        if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+
         if (isPresent) {
-            // Mark as present: Create record if not exists
             await prisma.attendance.upsert({
                 where: {
                     studentId_date: { studentId, date }
                 },
-                update: {}, // Do nothing if already exists
+                update: {},
                 create: {
                     studentId,
                     date,
                 }
             });
         } else {
-            // Mark as absent: Delete record if exists
             try {
                 await prisma.attendance.delete({
                     where: {

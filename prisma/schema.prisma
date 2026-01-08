@@ -10,20 +10,41 @@ datasource db {
   provider = "sqlite"
 }
 
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  students  Student[]
+}
+
 model Student {
-  id        String   @id @default(cuid())
-  phone     String?   @unique
-  name      String?
-  school    String?
-  year      String?
-  createdAt DateTime @default(now())
+  id          String       @id @default(cuid())
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phone       String?
+  name        String?
+  school      String?
+  year        String?
+  createdAt   DateTime     @default(now())
   attendances Attendance[]
+
+  @@unique([projectId, phone]) // Phone unique PER project
 }
 
 model Attendance {
   id        String   @id @default(cuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   date      String   // Using format YYYY-MM-DD
   checkedAt DateTime @default(now())
 

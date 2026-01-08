@@ -53,11 +53,16 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
             <div className="glass-card shadow-2xl" style={{ maxWidth: "480px", width: "100%", padding: "3.5rem 2.5rem", textAlign: "center" }}>
                 <header style={{ marginBottom: "3rem" }}>
                     <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>📅</div>
-                    {projectName && (
-                        <div style={{ display: "inline-block", padding: "0.25rem 0.75rem", borderRadius: "20px", background: "rgba(0,0,0,0.05)", fontSize: "0.85rem", fontWeight: "600", marginBottom: "1rem", color: "var(--secondary)" }}>
-                            {projectName}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center", marginBottom: "1rem" }}>
+                        {projectName && (
+                            <div style={{ display: "inline-block", padding: "0.25rem 0.75rem", borderRadius: "20px", background: "rgba(0,0,0,0.05)", fontSize: "0.85rem", fontWeight: "600", color: "var(--secondary)" }}>
+                                {projectName}
+                            </div>
+                        )}
+                        <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--primary)" }}>
+                            {new Date().toLocaleDateString("ko-KR", { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
                         </div>
-                    )}
+                    </div>
                     <h1 style={{ fontSize: "2.25rem", fontWeight: "800", letterSpacing: "-0.02em", marginBottom: "0.75rem" }}>출석 체크</h1>
                     <p style={{ color: "var(--secondary)", fontSize: "1.05rem" }}>이름과 연락처를 입력해주세요</p>
                 </header>

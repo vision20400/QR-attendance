@@ -15,6 +15,8 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [newProjectName, setNewProjectName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+    const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+    const [editName, setEditName] = useState("");
 
     useEffect(() => {
         fetchProjects();
@@ -60,6 +62,24 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleUpdateProject = async (id: string) => {
+        if (!editName.trim()) return;
+
+        try {
+            const resp = await fetch(`/api/admin/projects/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: editName }),
+            });
+            if (resp.ok) {
+                setEditingProjectId(null);
+                fetchProjects();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleLogout = async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         router.push("/admin/login");
@@ -80,15 +100,39 @@ export default function AdminDashboard() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem", marginBottom: "4rem" }}>
                 {projects.map(p => (
                     <div key={p.id} className="glass-card" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "1.5rem", transition: "transform 0.2s" }}>
-                        <div onClick={() => router.push(`/admin/${p.id}/attendance`)} style={{ cursor: "pointer" }}>
-                            <div style={{ fontSize: "1.5rem", fontWeight: "800", marginBottom: "0.5rem" }}>{p.name}</div>
-                            <div style={{ fontSize: "0.85rem", color: "var(--secondary)" }}>생성일: {new Date(p.createdAt).toLocaleDateString()}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            {editingProjectId === p.id ? (
+                                <div style={{ flex: 1, display: "flex", gap: "0.5rem" }}>
+                                    <input
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        style={{ fontSize: "1.25rem", fontWeight: "700", padding: "0.4rem", width: "100%" }}
+                                        autoFocus
+                                    />
+                                    <button className="btn-success" style={{ padding: "0.4rem 0.8rem" }} onClick={() => handleUpdateProject(p.id)}>저장</button>
+                                    <button className="btn-secondary" style={{ padding: "0.4rem 0.8rem" }} onClick={() => setEditingProjectId(null)}>취소</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div onClick={() => router.push(`/admin/${p.id}/attendance`)} style={{ cursor: "pointer", flex: 1 }}>
+                                        <div style={{ fontSize: "1.5rem", fontWeight: "800", marginBottom: "0.5rem" }}>{p.name}</div>
+                                        <div style={{ fontSize: "0.85rem", color: "var(--secondary)" }}>생성일: {new Date(p.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                    <button
+                                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem", padding: "0.2rem" }}
+                                        onClick={() => { setEditingProjectId(p.id); setEditName(p.name); }}
+                                        title="이름 수정"
+                                    >
+                                        ✏️
+                                    </button>
+                                </>
+                            )}
                         </div>
 
                         <div style={{ background: "rgba(0,0,0,0.03)", padding: "1rem", borderRadius: "12px", fontSize: "0.85rem" }}>
                             <div style={{ fontWeight: "600", marginBottom: "0.5rem", fontSize: "0.75rem", color: "var(--secondary)" }}>입장용 단축 링크</div>
                             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                                <input readOnly value={`${window.location.origin}/attendance/${p.id}`} style={{ fontSize: "0.75rem", padding: "0.5rem" }} />
+                                <input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/attendance/${p.id}`} style={{ fontSize: "0.75rem", padding: "0.5rem" }} />
                                 <button className="btn-secondary" style={{ padding: "0.5rem", fontSize: "0.7rem" }} onClick={() => {
                                     navigator.clipboard.writeText(`${window.location.origin}/attendance/${p.id}`);
                                     alert("링크가 복사되었습니다.");

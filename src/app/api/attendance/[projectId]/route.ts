@@ -1,6 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
+    try {
+        const { projectId } = await params;
+        const project = await prisma.project.findUnique({
+            where: { id: projectId },
+            select: { name: true }
+        });
+
+        if (!project) {
+            return NextResponse.json({ error: "프로젝트를 찾을 수 없습니다." }, { status: 404 });
+        }
+
+        return NextResponse.json(project);
+    } catch (error) {
+        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+    }
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
     try {
         const { projectId } = await params;

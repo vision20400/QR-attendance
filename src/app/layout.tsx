@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "번영로 청소년부 출석부",
-  description: "번영로교회 청소년부 스마트 출석관리 시스템",
+  title: "스마트 출석부",
+  description: "스마트 출석관리 시스템",
 };
 
 export default function RootLayout({

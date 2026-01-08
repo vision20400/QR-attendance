@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { formatPhoneNumber } from "@/lib/format";
 
 export default function AttendancePage({ params }: { params: Promise<{ projectId: string }> }) {
     const { projectId } = use(params);
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
+    const [projectName, setProjectName] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    useEffect(() => {
+        fetch(`/api/attendance/${projectId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.name) setProjectName(data.name);
+            })
+            .catch(err => console.error("Error fetching project info:", err));
+    }, [projectId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,6 +53,11 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
             <div className="glass-card shadow-2xl" style={{ maxWidth: "480px", width: "100%", padding: "3.5rem 2.5rem", textAlign: "center" }}>
                 <header style={{ marginBottom: "3rem" }}>
                     <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>📅</div>
+                    {projectName && (
+                        <div style={{ display: "inline-block", padding: "0.25rem 0.75rem", borderRadius: "20px", background: "rgba(0,0,0,0.05)", fontSize: "0.85rem", fontWeight: "600", marginBottom: "1rem", color: "var(--secondary)" }}>
+                            {projectName}
+                        </div>
+                    )}
                     <h1 style={{ fontSize: "2.25rem", fontWeight: "800", letterSpacing: "-0.02em", marginBottom: "0.75rem" }}>출석 체크</h1>
                     <p style={{ color: "var(--secondary)", fontSize: "1.05rem" }}>이름과 연락처를 입력해주세요</p>
                 </header>

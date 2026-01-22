@@ -23,19 +23,33 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     try {
         const { projectId } = await params;
         const { name, phone } = await request.json();
+        const { searchParams } = new URL(request.url);
+        const dateParam = searchParams.get("date");
 
         if (!name) {
             return NextResponse.json({ error: "이름을 입력해주세요." }, { status: 400 });
         }
 
         const today = new Date().toISOString().split("T")[0];
+        const date = dateParam || today;
 
-        // Find student in this project
+        // Find or create student in this project
         let student;
         if (phone) {
             student = await prisma.student.findUnique({
                 where: { projectId_phone: { projectId, phone } },
             });
+
+            if (!student) {
+                // Create new student with name and phone
+                student = await prisma.student.create({
+                    data: {
+                        projectId,
+                        name,
+                        phone
+                    }
+                });
+            }
         } else {
             // If only name is provided, find the unique student with that name in this project
             const students = await prisma.student.findMany({
@@ -43,32 +57,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
             });
 
             if (students.length === 0) {
-                return NextResponse.json({ error: "등록되지 않은 학생입니다. 휴대폰 번호와 함께 입력해주세요." }, { status: 404 });
-            }
-
-            if (students.length > 1) {
+                // Create new student with just name
+                student = await prisma.student.create({
+                    data: {
+                        projectId,
+                        name
+                    }
+                });
+            } else if (students.length > 1) {
                 return NextResponse.json({ error: "동명이인이 있습니다. 휴대폰 번호를 함께 입력해주세요." }, { status: 400 });
+            } else {
+                student = students[0];
             }
-
-            student = students[0];
         }
 
-        if (!student) {
-            return NextResponse.json({ error: "등록되지 않은 정보입니다." }, { status: 404 });
-        }
-
-        // Mark attendance
-        await prisma.attendance.upsert({
+        // Check if already checked in
+        const existingAttendance = await prisma.attendance.findUnique({
             where: {
                 studentId_date: {
                     studentId: student.id,
-                    date: today,
+                    date: date,
                 },
             },
-            update: {}, // Already checked in
-            create: {
+        });
+
+        if (existingAttendance) {
+            return NextResponse.json({ success: true, name: student.name, alreadyCheckedIn: true });
+        }
+
+        // Mark attendance
+        await prisma.attendance.create({
+            data: {
                 studentId: student.id,
-                date: today,
+                date: date,
             },
         });
 

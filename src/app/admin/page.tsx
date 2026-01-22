@@ -18,9 +18,52 @@ export default function AdminDashboard() {
     const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
 
+    // Password change states
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [passwordSuccess, setPasswordSuccess] = useState("");
+
     useEffect(() => {
         fetchProjects();
     }, []);
+
+    const handlePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordError("");
+        setPasswordSuccess("");
+
+        if (newPassword !== confirmPassword) {
+            setPasswordError("새 비밀번호가 일치하지 않습니다.");
+            return;
+        }
+
+        try {
+            const resp = await fetch("/api/admin/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                setPasswordSuccess("비밀번호가 성공적으로 변경되었습니다.");
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+                // Close modal after delay
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setPasswordSuccess("");
+                }, 2000);
+            } else {
+                setPasswordError(data.error || "비밀번호 변경 실패");
+            }
+        } catch (err) {
+            setPasswordError("서버 연결 실패");
+        }
+    };
 
     const fetchProjects = async () => {
         try {
@@ -94,8 +137,69 @@ export default function AdminDashboard() {
                     <h1 style={{ textAlign: "left", fontSize: "2.5rem", marginBottom: "0.5rem" }}>나의 출석부</h1>
                     <p style={{ textAlign: "left", margin: 0 }}>관리할 출석부를 선택하거나 새로 만듭니다.</p>
                 </div>
-                <button onClick={handleLogout} className="btn-error">로그아웃</button>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                    <button onClick={() => setShowPasswordModal(true)} className="btn-secondary">비밀번호 변경</button>
+                    <button onClick={handleLogout} className="btn-error">로그아웃</button>
+                </div>
             </header>
+
+            {/* Password Change Modal */}
+            {showPasswordModal && (
+                <div style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "rgba(0,0,0,0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                    backdropFilter: "blur(4px)"
+                }}>
+                    <div className="glass-card" style={{ maxWidth: "400px", width: "90%", padding: "2.5rem" }}>
+                        <h2 style={{ marginBottom: "1.5rem", textAlign: "center" }}>비밀번호 변경</h2>
+                        <form onSubmit={handlePasswordChange}>
+                            <div className="form-group" style={{ marginBottom: "1rem" }}>
+                                <label>현재 비밀번호</label>
+                                <input
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: "1rem" }}>
+                                <label>새 비밀번호</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: "2rem" }}>
+                                <label>새 비밀번호 확인</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            {passwordError && <div style={{ color: "var(--error)", marginBottom: "1.5rem", fontSize: "0.85rem", textAlign: "center" }}>{passwordError}</div>}
+                            {passwordSuccess && <div style={{ color: "var(--success)", marginBottom: "1.5rem", fontSize: "0.85rem", textAlign: "center" }}>{passwordSuccess}</div>}
+
+                            <div style={{ display: "flex", gap: "1rem" }}>
+                                <button type="submit" className="btn-primary" style={{ flex: 1 }}>변경하기</button>
+                                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setShowPasswordModal(false)}>취소</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem", marginBottom: "4rem" }}>
                 {projects.map(p => (

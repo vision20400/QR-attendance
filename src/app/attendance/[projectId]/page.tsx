@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import { formatPhoneNumber } from "@/lib/format";
+import { useSearchParams } from "next/navigation";
 
-export default function AttendancePage({ params }: { params: Promise<{ projectId: string }> }) {
-    const { projectId } = use(params);
+function AttendanceForm({ projectId }: { projectId: string }) {
+    const searchParams = useSearchParams();
+    const dateParam = searchParams.get("date");
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [projectName, setProjectName] = useState("");
@@ -26,7 +28,10 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
         setMessage(null);
 
         try {
-            const resp = await fetch(`/api/attendance/${projectId}`, {
+            const url = new URL(`/api/attendance/${projectId}`, window.location.origin);
+            if (dateParam) url.searchParams.set("date", dateParam);
+
+            const resp = await fetch(url.toString(), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, phone }),
@@ -35,7 +40,11 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
             const data = await resp.json();
 
             if (resp.ok) {
-                setMessage({ type: "success", text: `${data.name}님, 출석이 완료되었습니다! ✨` });
+                if (data.alreadyCheckedIn) {
+                    setMessage({ type: "success", text: `${data.name}님, 이미 출석이 완료되었습니다! ✅` });
+                } else {
+                    setMessage({ type: "success", text: `${data.name}님, 출석이 완료되었습니다! ✨` });
+                }
                 setName("");
                 setPhone("");
             } else {
@@ -60,7 +69,10 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
                             </div>
                         )}
                         <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--primary)" }}>
-                            {new Date().toLocaleDateString("ko-KR", { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
+                            {dateParam ?
+                                new Date(dateParam).toLocaleDateString("ko-KR", { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }) :
+                                new Date().toLocaleDateString("ko-KR", { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
+                            }
                         </div>
                     </div>
                     <h1 style={{ fontSize: "2.25rem", fontWeight: "800", letterSpacing: "-0.02em", marginBottom: "0.75rem" }}>출석 체크</h1>
@@ -100,5 +112,15 @@ export default function AttendancePage({ params }: { params: Promise<{ projectId
                 )}
             </div>
         </main>
+    );
+}
+
+export default function AttendancePage({ params }: { params: Promise<{ projectId: string }> }) {
+    const { projectId } = use(params);
+
+    return (
+        <Suspense fallback={<div className="container" style={{ minHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>}>
+            <AttendanceForm projectId={projectId} />
+        </Suspense>
     );
 }
